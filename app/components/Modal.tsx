@@ -1,7 +1,7 @@
 import Image from "next/image";
-import { Post } from "../mocks/posts";
 import { getTimeAgo } from "../utils/time";
 import HeartIcon from "./HeartIcon";
+import { Post } from "../types";
 
 export default function Modal({
   post,
@@ -10,6 +10,11 @@ export default function Modal({
   post: Post;
   onClose: () => void;
 }) {
+  const username = post.profile?.username || "default user";
+  const avatarUrl = post.profile?.avatar_url || "/blank-profile-picture.webp";
+
+  console.log(avatarUrl);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
@@ -45,15 +50,17 @@ export default function Modal({
         <div className="flex items-center gap-3 p-4 border-b border-border">
           <div className="relative w-10 h-10 rounded-full overflow-hidden ring-2 ring-primary">
             <Image
-              src={post.user?.avatar || 'https://zjrkhyvcebchjfebpbiw.supabase.co/storage/v1/object/public/supagram/profiles/847591592417500868.jpg'}
-              alt={post.user?.username || 'default user'}
+              src={avatarUrl}
+              alt={username}
               fill
               className="object-cover"
             />
           </div>
           <div className="flex flex-col">
-            <span className="font-semibold text-foreground">{post.user?.username || 'default user'}</span>
-            <span className="text-xs text-foreground/50">{getTimeAgo(new Date(post.created_at))}</span>
+            <span className="font-semibold text-foreground">@{username}</span>
+            <span className="text-xs text-foreground/50">
+              {getTimeAgo(new Date(post.created_at))}
+            </span>
           </div>
         </div>
 
@@ -61,7 +68,7 @@ export default function Modal({
         <div className="relative w-full aspect-square">
           <Image
             src={post.image_url}
-            alt={`Post de ${post.user?.username || 'default user'}`}
+            alt={`Post de ${username}`}
             fill
             className="object-cover"
           />
@@ -76,7 +83,7 @@ export default function Modal({
             </span>
           </div>
           <p className="mt-2 text-foreground">
-            <span className="font-semibold">{post.user?.username || 'default user'}</span>{" "}
+            <span className="font-semibold">{username}</span>{" "}
             <span className="text-foreground/80">{post.caption}</span>
           </p>
         </div>

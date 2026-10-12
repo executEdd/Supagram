@@ -20,7 +20,10 @@ export default function EditProfilePage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validateUsername = (value: string) => {
@@ -46,7 +49,10 @@ export default function EditProfilePage() {
     setUsernameError(validateUsername(value));
   };
 
-  const checkUsernameAvailable = async (newUsername: string, currentUserId: string): Promise<boolean> => {
+  const checkUsernameAvailable = async (
+    newUsername: string,
+    currentUserId: string,
+  ): Promise<boolean> => {
     const { data, error } = await supabase
       .from("profiles")
       .select("username")
@@ -140,7 +146,10 @@ export default function EditProfilePage() {
     if (username !== originalUsername) {
       const isAvailable = await checkUsernameAvailable(username, profile.id);
       if (!isAvailable) {
-        setMessage({ type: "error", text: "Este nombre de usuario ya está en uso" });
+        setMessage({
+          type: "error",
+          text: "Este nombre de usuario ya está en uso",
+        });
         setIsSaving(false);
         return;
       }
@@ -172,13 +181,11 @@ export default function EditProfilePage() {
       }
 
       // Upsert en profiles (insert o update)
-      const { error: upsertError } = await supabase
-        .from("profiles")
-        .upsert({
-          id: profile.id,
-          username,
-          avatar_url: avatarUrl,
-        });
+      const { error: upsertError } = await supabase.from("profiles").upsert({
+        id: profile.id,
+        username,
+        avatar_url: avatarUrl,
+      });
 
       if (upsertError) throw upsertError;
 
@@ -214,7 +221,10 @@ export default function EditProfilePage() {
       {/* Header */}
       <header className="sticky top-0 z-40 bg-card-bg border-b border-border">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/profile" className="text-foreground/60 hover:text-foreground">
+          <Link
+            href="/profile"
+            className="text-foreground/60 hover:text-foreground"
+          >
             Cancelar
           </Link>
           <h1 className="text-xl font-bold text-foreground">Editar perfil</h1>
@@ -231,7 +241,11 @@ export default function EditProfilePage() {
 
       {/* Formulario */}
       <main className="max-w-lg mx-auto px-4 py-8">
-        <form id="edit-form" onSubmit={handleSubmit} className="flex flex-col gap-6">
+        <form
+          id="edit-form"
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-6"
+        >
           {/* Avatar */}
           <div className="flex flex-col items-center gap-4">
             <div className="relative w-28 h-28 rounded-full overflow-hidden ring-4 ring-primary bg-card-bg">
@@ -266,7 +280,9 @@ export default function EditProfilePage() {
 
           {/* Username */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm text-foreground/60">Nombre de usuario</label>
+            <label className="text-sm text-foreground/60">
+              Nombre de usuario
+            </label>
             <input
               type="text"
               value={username}
