@@ -5,15 +5,23 @@ import { useEffect, useState } from "react";
 import Modal from "../components/Modal";
 import HeartIcon from "../components/HeartIcon";
 import { supabase } from "../lib/supabase";
+import { fetchLikedPostIds, setLike } from "../lib/likes";
 import { Post } from "../types";
 
 export default function RankPage() {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
   const [posts, setPosts] = useState<Post[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPosts = async () => {
+      // 0. Usuario actual (puede no haber sesión)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUserId(user?.id ?? null);
+
       // 1. Obtener posts
       const { data: postsData, error: postsError } = await supabase
         .from("posts")
@@ -43,11 +51,14 @@ export default function RankPage() {
         ]) || [],
       );
 
-      // 5. Combinar posts con profiles
+      // 4.5. Qué posts ha dado like el usuario actual
+      const likedIds = user ? await fetchLikedPostIds(user.id) : new Set<string>();
+
+      // 5. Combinar posts con profiles y likes
       const postsWithProfiles: Post[] = postsData.map((post) => ({
         ...post,
         profile: profilesMap.get(post.user_id),
-        isLiked: false,
+        isLiked: likedIds.has(post.id),
       }));
 
       setPosts(postsWithProfiles);
@@ -55,6 +66,50 @@ export default function RankPage() {
 
     fetchPosts();
   }, []);
+
+  const handleLike = async (postId: number | string) => {
+    // Sin sesión no se puede dar like
+    if (!userId) {
+      window.location.href = "/auth/login";
+      return;
+    }
+
+    const post = posts.find((p) => p.id === postId);
+    if (!post) return;
+
+    const wasLiked = post.isLiked;
+
+    // Actualización optimista
+    const applyChange = (list: Post[]) =>
+      list.map((p) =>
+        p.id === postId
+          ? {
+              ...p,
+              isLiked: !wasLiked,
+              likes: wasLiked ? p.likes - 1 : p.likes + 1,
+            }
+          : p,
+      );
+
+    setPosts(applyChange);
+    if (selectedPost?.id === postId) {
+      setSelectedPost({ ...selectedPost, isLiked: !wasLiked, likes: wasLiked ? selectedPost.likes - 1 : selectedPost.likes + 1 });
+    }
+
+    // Persistir en Supabase
+    try {
+      await setLike(String(postId), userId, !wasLiked);
+    } catch (error) {
+      console.error("Error al guardar like:", error);
+      // Revertir si falló
+      setPosts((prev) =>
+        prev.map((p) => (p.id === postId ? { ...p, isLiked: wasLiked, likes: post.likes } : p)),
+      );
+      if (selectedPost?.id === postId) {
+        setSelectedPost({ ...selectedPost, isLiked: wasLiked, likes: post.likes });
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -98,7 +153,13 @@ export default function RankPage() {
 
       {/* Modal */}
       {selectedPost && (
-        <Modal post={selectedPost} onClose={() => setSelectedPost(null)} />
+        <Modal
+          post={selectedPost}
+          onClose={() => setSelectedPost(null)}
+          onLike={handleLike}
+          canComment={!!userId}
+          currentUserId={userId}
+        />
       )}
     </div>
   );

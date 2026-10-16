@@ -1,19 +1,24 @@
 import Image from "next/image";
 import { getTimeAgo } from "../utils/time";
 import HeartIcon from "./HeartIcon";
+import Comments from "./Comments";
 import { Post } from "../types";
 
 export default function Modal({
   post,
   onClose,
+  onLike,
+  canComment,
+  currentUserId,
 }: {
   post: Post;
   onClose: () => void;
+  onLike?: (id: number | string) => void;
+  canComment?: boolean;
+  currentUserId?: string | null;
 }) {
   const username = post.profile?.username || "default user";
   const avatarUrl = post.profile?.avatar_url || "/blank-profile-picture.webp";
-
-  console.log(avatarUrl);
 
   return (
     <div
@@ -21,7 +26,7 @@ export default function Modal({
       onClick={onClose}
     >
       <div
-        className="relative bg-card-bg rounded-xl overflow-hidden max-w-lg w-full shadow-xl"
+        className="relative bg-card-bg rounded-xl overflow-hidden max-w-lg w-full shadow-xl max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Botón cerrar */}
@@ -47,7 +52,7 @@ export default function Modal({
         </button>
 
         {/* Header con usuario */}
-        <div className="flex items-center gap-3 p-4 border-b border-border">
+        <div className="flex items-center gap-3 p-4 border-b border-border shrink-0">
           <div className="relative w-10 h-10 rounded-full overflow-hidden ring-2 ring-primary">
             <Image
               src={avatarUrl}
@@ -65,7 +70,7 @@ export default function Modal({
         </div>
 
         {/* Imagen */}
-        <div className="relative w-full aspect-square">
+        <div className="relative w-full aspect-square shrink-0">
           <Image
             src={post.image_url}
             alt={`Post de ${username}`}
@@ -75,9 +80,19 @@ export default function Modal({
         </div>
 
         {/* Likes y caption */}
-        <div className="p-4">
+        <div className="p-4 shrink-0">
           <div className="flex items-center gap-2">
-            <HeartIcon filled={true} />
+            {onLike ? (
+              <button
+                onClick={() => onLike(post.id)}
+                className="hover:scale-110 transition-transform active:scale-95"
+                aria-label={post.isLiked ? "Quitar like" : "Dar like"}
+              >
+                <HeartIcon filled={post.isLiked} />
+              </button>
+            ) : (
+              <HeartIcon filled={true} />
+            )}
             <span className="text-lg font-bold text-foreground">
               {post.likes.toLocaleString()} likes
             </span>
@@ -86,6 +101,15 @@ export default function Modal({
             <span className="font-semibold">{username}</span>{" "}
             <span className="text-foreground/80">{post.caption}</span>
           </p>
+        </div>
+
+        {/* Comentarios */}
+        <div className="overflow-y-auto shrink">
+          <Comments
+            postId={String(post.id)}
+            canComment={canComment ?? false}
+            currentUserId={currentUserId ?? null}
+          />
         </div>
       </div>
     </div>

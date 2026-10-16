@@ -41,7 +41,7 @@ export default function RegisterPage() {
 
   const checkUsernameAvailable = async (username: string): Promise<boolean> => {
     const { data, error } = await supabase
-      .from("users")
+      .from("profiles")
       .select("username")
       .eq("username", username)
       .single();

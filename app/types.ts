@@ -18,4 +18,14 @@ export interface Post {
 export interface PostCardProps {
   post: Post;
   onLike: (id: number | string) => void;
+  onOpenComments: (id: number | string) => void;
+}
+
+export interface Comment {
+  id: string;
+  post_id: string;
+  user_id: string;
+  body: string;
+  created_at: Date;
+  profile?: Profile;
 }
